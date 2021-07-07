@@ -78,8 +78,8 @@ int HighVolt = 33;
 int16_t inputchar = -1;
 int16_t lastinputchar = -1;
 
-uint64_t timestamp = 0;
 uint64_t timepass = 0;
+uint64_t timestamp = 0;
 uint64_t _micros = 0;
 
 GPIO_PinState User_Button[2];
@@ -166,9 +166,10 @@ int main(void)
 		static uint64_t timestamp = 0;
 		if (micros() - timestamp >= 100) //100
 		{
+			timepass = micros() - timestamp;
 			timestamp = micros();
-			counter += frequency*(4096.0/10000.0)/10.0;
-			if(counter > 4096)
+			counter += (timepass/100.0)*(frequency/10.0)*(4096.0/10000.0);
+			if(counter > 4096.0)
 			{
 				counter += -4096.0;
 			}
