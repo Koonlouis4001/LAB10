@@ -69,8 +69,8 @@ char error[] = "Wrong Input\r\n\r\n";
 int Input = 0;
 int firsttime = 0;
 int Working = 1;
-int frequency = 10;
-int duty = 0;
+int frequency = 50;
+int duty = 50;
 
 int LowVolt = 0;
 int HighVolt = 33;
@@ -79,6 +79,7 @@ int16_t inputchar = -1;
 int16_t lastinputchar = -1;
 
 uint64_t timestamp = 0;
+uint64_t timepass = 0;
 uint64_t _micros = 0;
 
 GPIO_PinState User_Button[2];
@@ -163,13 +164,13 @@ int main(void)
 	while (1)
 	{
 		static uint64_t timestamp = 0;
-		if (micros() - timestamp > 100) //100
+		if (micros() - timestamp >= 100) //100
 		{
 			timestamp = micros();
 			counter += frequency*(4096.0/10000.0)/10.0;
 			if(counter > 4096)
 			{
-				counter += -4096;
+				counter += -4096.0;
 			}
 			switch(wave)
 			{
@@ -220,7 +221,7 @@ int main(void)
 		int16_t inputchar = UARTRecieveIT();
 		if(inputchar!= -1)
 		{
-			sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n\r\n", inputchar);
+			//sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n\r\n", inputchar);
 			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 1000);
 			Input = 1;
 		}
