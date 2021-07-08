@@ -168,7 +168,12 @@ int main(void)
 		{
 			timepass = micros() - timestamp;
 			timestamp = micros();
-			counter += (timepass/100.0)*(frequency/10.0)*(4096.0/10000.0);
+			counter += (timepass/100.0)*(frequency/10.0)*(4096.0/10000.0);   	//ตัว�?�?ร float //�?ว�?เ�?�?�?�?�?าที�?เ�?ิ�?ม�?ึ�?�? �?ดย�?ะเ�?ิ�?ม�?ึ�?�?เท�?า�?ั�? 4096/10000
+																				//เ�?ื�?อ�?�?า�? 1 s = 1,000,000 us //ดั�?�?ั�?�?ระ�?�?ที�?ทำ�?า�?ทุ�?�? 100 us //ต�?อ�?ทำ�?า�? 10000 //รอ�?ถึ�?�?ะ�?ร�? 1 s
+																				//�?ต�?หา�?เ�?ิ�?ม�?ึ�?�? 4096/10000 //อย�?า�?เดียว�?ะสามารถ�?�?�?�?ด�?�?�?�?ตอ�?ที�? �?วามถี�?เ�?�?�? 1
+																				//ดั�?�?ั�?�?ต�?อ�?�?ำ�?�?า�?วามถี�?�?�?�?ูณด�?วย
+																				//�?ละ�?า�?ระ�?�?�?�?มี�?อ�?าสที�?�?ารเ�?�?าสู�?เ�?ื�?อ�?�?�?�?ี�?�?ะมี�?อ�?าสที�?�?�?�?เวลามา�?�?ว�?า 100 us //ดั�?�?ั�?�?ต�?อ�?เอาตัว�?�?ร timepass
+																				//มาหารด�?วยเวลา 100 us //�?ล�?ว�?ำมา�?ูณทำ�?ห�?ระ�?�?เ�?�?�?�?�?ตามเวลาที�?�?�?า�?�?�?
 			if(counter > 4096.0)
 			{
 				counter += -4096.0;
@@ -177,28 +182,44 @@ int main(void)
 			{
 				case SAWTOOTH:
 				{
-					if(slope)
+					if(slope) //slope //�?ือตัว�?�?รสำหรั�?�?าร�?�?�?�?เ�?�?�? �?ึ�?�?�?ละล�? �?ดย 1 //�?ะเ�?�?�?�?ึ�?�? �?ละ 0 //�?ะเ�?�?�?ล�?
 					{
-						dataOut = (LowVolt + (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;
+						dataOut = (LowVolt + (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;	; //ระ�?�?�?ะเริ�?มต�?�?ที�? LowVolt //ดั�?�?ั�?�?ต�?อ�?�?ว�? Low Volt //�?�?อ�?�?ะ�?ำ�?�?�?ว�?�?ั�?
+																								//�?�?า counter*(HighVolt - LowVolt)/4096 //เ�?ื�?อ�?ห�?เมื�?อ counter
+																								//เ�?ิ�?ม�?ึ�?�?ตั�?�?�?ต�? 0 //�?�?�?�?ถึ�? 4096 //dataOut = LowVolt //�?�?�?�?ถึ�? HighVolt
+																								//ต�?อ�?หารด�?วย 33 //ทั�?�?สม�?ารเ�?ื�?อ�?�?ล�? LowVolt //�?ละ HighVolt //อยู�?�?�?�?�?ว�? 0-1
 					}
 					else
 					{
-						dataOut = (HighVolt - (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;
+						dataOut = (HighVolt - (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;	//�?ล�?ายด�?า�?�?�?�?ต�?เริ�?ม�?า�? HighVolt
+																								//�?ละ�?ำ�?�?ล�?�?ั�? counter*(HighVolt - LowVolt)/4096
 					}
 				}
 				break;
 				case SINE_WAVE:
 				{
-					dataOut = ((HighVolt - LowVolt)*4096.0/66.0)*(sin(2*M_PI*counter/4096.0)+1.0) + (LowVolt*4096.0/33.0);
+					dataOut = ((HighVolt - LowVolt)*4096.0/66.0)*(sin(2*M_PI*counter/4096.0)+1.0) + (LowVolt*4096.0/33.0);	//(sin(2*M_PI*counter/4096.0)+1.0)
+																															//�?�?าที�?ออ�?มา�?ะมี�?�?าอยู�?ระหว�?า�? -1 ถึ�? 1
+																															//ดั�?�?ั�?�?�?ึ�?ต�?อ�?�?ว�? 1 //เ�?�?า�?�?�?ห�?เ�?�?�? 0 ถึ�? 2�?ท�?
+																															//�?า�?�?ั�?�?เรา�?ะ�?ำ�?�?�?ูณ�?ั�? ((HighVolt - LowVolt)*4096.0/66.0)
+																															//�?ดยเราต�?อ�?�?�?ล�? HighVolt LowVolt //�?ห�?เ�?�?�? 4096 //ดั�?�?ั�?�?�?ึ�?ต�?อ�?�?ูณด�?วย 4096/33
+																															//�?ต�?เ�?ื�?อ�?�?า�? ต�?อ�?�?าร�?ห�? 0 - 2 //มี�?�?าสู�?สุดที�? HighVolt - LowVolt
+																															//�?ึ�?ต�?อ�?�?ำ 2 //�?�?หารอี�?ทีเ�?ื�?อ�?ห�? 0 //�?�?ถึ�? HighVolt - LowVolt
+																															//�?า�?�?ั�?�?�?�?อย�?ำ LowVolt //�?�?�?ว�?อี�?ทีทำ�?ห�? dataOut //อยู�?�?�?�?�?ว�? LowVolt //ถึ�? HighVolt
 				}
 				break;
 				case SQUARE_WAVE:
 				{
-					if(duty*4096.0/100.0 >= counter)
+					if(duty*4096.0/100.0 >= counter) 	//�?ำ�?�?า dutyCycle //มาหาร 100 //�?ล�?ว�?ำ�?�?�?ูณ 4096 //�?ะ�?ด�?�?�?าที�?อยู�?ระหว�?า�? 0 - 4096
+														//ถ�?า�?�?าดั�?�?ล�?าวมา�?�?ว�?า counter //dataOut = HighVolt
 					{
 						dataOut = HighVolt*4096.0/33.0;
+						if(HighVolt == 33)
+						{
+							dataOut = 4095;
+						}
 					}
-					else
+					else								//ถ�?า�?�?อย�?ว�?า dataOut = LowVolt
 					{
 						dataOut = LowVolt*4096.0/33.0;
 					}
@@ -320,6 +341,7 @@ int main(void)
 						if(Input != 0)
 						{
 							state = START;
+							HAL_UART_Transmit(&huart2, (uint8_t*)error, strlen(error),1000);
 						}
 					}
 				}
@@ -402,17 +424,19 @@ int main(void)
 						if(Input != 0)
 						{
 							state = SELECTMODE;
+							HAL_UART_Transmit(&huart2, (uint8_t*)error, strlen(error),1000);
 						}
 					}
 					break;
 				}
 			}
 			break;
-			default:
-			{
-				state = START;
-			}
-			break;
+//			default:
+//			{
+//				state = START;
+//				HAL_UART_Transmit(&huart2, (uint8_t*)error, strlen(error),1000);
+//			}
+//			break;
 		}
 
 			  		/*This section just simmulate Work Load*/
