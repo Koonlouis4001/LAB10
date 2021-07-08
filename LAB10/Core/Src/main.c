@@ -48,7 +48,7 @@ DMA_HandleTypeDef hdma_adc1;
 SPI_HandleTypeDef hspi3;
 
 TIM_HandleTypeDef htim3;
-TIM_HandleTypeDef htim11;
+TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart2;
 
@@ -84,7 +84,7 @@ uint64_t _micros = 0;
 
 GPIO_PinState User_Button[2];
 
-float counter = 0;
+double counter = 0;
 uint16_t slope = 0;
 
 uint16_t ADCin = 0;
@@ -101,7 +101,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
-static void MX_TIM11_Init(void);
+static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 int16_t UARTRecieveIT();
 void MCP4922SetOutput(uint8_t Config, uint16_t DACOutput);
@@ -146,10 +146,10 @@ int main(void)
   MX_SPI3_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
-  MX_TIM11_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start(&htim3);
-	HAL_TIM_Base_Start_IT(&htim11);
+	HAL_TIM_Base_Start_IT(&htim5);
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) &ADCin, 1);
 
 	HAL_GPIO_WritePin(LOAD_GPIO_Port, LOAD_Pin, GPIO_PIN_RESET);
@@ -168,12 +168,11 @@ int main(void)
 		{
 			timepass = micros() - timestamp;
 			timestamp = micros();
-			counter += (timepass/100.0)*(frequency/10.0)*(4096.0/10000.0);   	//ตัว�?�?ร float //�?ว�?เ�?�?�?�?�?าที�?เ�?ิ�?ม�?ึ�?�? �?ดย�?ะเ�?ิ�?ม�?ึ�?�?เท�?า�?ั�? 4096/10000
-																				//เ�?ื�?อ�?�?า�? 1 s = 1,000,000 us //ดั�?�?ั�?�?ระ�?�?ที�?ทำ�?า�?ทุ�?�? 100 us //ต�?อ�?ทำ�?า�? 10000 //รอ�?ถึ�?�?ะ�?ร�? 1 s
-																				//�?ต�?หา�?เ�?ิ�?ม�?ึ�?�? 4096/10000 //อย�?า�?เดียว�?ะสามารถ�?�?�?�?ด�?�?�?�?ตอ�?ที�? �?วามถี�?เ�?�?�? 1
-																				//ดั�?�?ั�?�?ต�?อ�?�?ำ�?�?า�?วามถี�?�?�?�?ูณด�?วย
-																				//�?ละ�?า�?ระ�?�?�?�?มี�?อ�?าสที�?�?ารเ�?�?าสู�?เ�?ื�?อ�?�?�?�?ี�?�?ะมี�?อ�?าสที�?�?�?�?เวลามา�?�?ว�?า 100 us //ดั�?�?ั�?�?ต�?อ�?เอาตัว�?�?ร timepass
-																				//มาหารด�?วยเวลา 100 us //�?ล�?ว�?ำมา�?ูณทำ�?ห�?ระ�?�?เ�?�?�?�?�?ตามเวลาที�?�?�?า�?�?�?
+			if(timepass > 0 && timepass < 1000)
+			{
+				counter += (timepass/100.0)*(frequency/10.0)*(4096.0/10000.0);
+			}
+
 			if(counter > 4096.0)
 			{
 				counter += -4096.0;
@@ -182,36 +181,24 @@ int main(void)
 			{
 				case SAWTOOTH:
 				{
-					if(slope) //slope //�?ือตัว�?�?รสำหรั�?�?าร�?�?�?�?เ�?�?�? �?ึ�?�?�?ละล�? �?ดย 1 //�?ะเ�?�?�?�?ึ�?�? �?ละ 0 //�?ะเ�?�?�?ล�?
+					if(slope)
 					{
-						dataOut = (LowVolt + (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;	; //ระ�?�?�?ะเริ�?มต�?�?ที�? LowVolt //ดั�?�?ั�?�?ต�?อ�?�?ว�? Low Volt //�?�?อ�?�?ะ�?ำ�?�?�?ว�?�?ั�?
-																								//�?�?า counter*(HighVolt - LowVolt)/4096 //เ�?ื�?อ�?ห�?เมื�?อ counter
-																								//เ�?ิ�?ม�?ึ�?�?ตั�?�?�?ต�? 0 //�?�?�?�?ถึ�? 4096 //dataOut = LowVolt //�?�?�?�?ถึ�? HighVolt
-																								//ต�?อ�?หารด�?วย 33 //ทั�?�?สม�?ารเ�?ื�?อ�?�?ล�? LowVolt //�?ละ HighVolt //อยู�?�?�?�?�?ว�? 0-1
+						dataOut = (LowVolt + (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;
 					}
 					else
 					{
-						dataOut = (HighVolt - (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;	//�?ล�?ายด�?า�?�?�?�?ต�?เริ�?ม�?า�? HighVolt
-																								//�?ละ�?ำ�?�?ล�?�?ั�? counter*(HighVolt - LowVolt)/4096
+						dataOut = (HighVolt - (counter*(HighVolt-LowVolt)/4096.0))*4096.0/33.0;
 					}
 				}
 				break;
 				case SINE_WAVE:
 				{
-					dataOut = ((HighVolt - LowVolt)*4096.0/66.0)*(sin(2*M_PI*counter/4096.0)+1.0) + (LowVolt*4096.0/33.0);	//(sin(2*M_PI*counter/4096.0)+1.0)
-																															//�?�?าที�?ออ�?มา�?ะมี�?�?าอยู�?ระหว�?า�? -1 ถึ�? 1
-																															//ดั�?�?ั�?�?�?ึ�?ต�?อ�?�?ว�? 1 //เ�?�?า�?�?�?ห�?เ�?�?�? 0 ถึ�? 2�?ท�?
-																															//�?า�?�?ั�?�?เรา�?ะ�?ำ�?�?�?ูณ�?ั�? ((HighVolt - LowVolt)*4096.0/66.0)
-																															//�?ดยเราต�?อ�?�?�?ล�? HighVolt LowVolt //�?ห�?เ�?�?�? 4096 //ดั�?�?ั�?�?�?ึ�?ต�?อ�?�?ูณด�?วย 4096/33
-																															//�?ต�?เ�?ื�?อ�?�?า�? ต�?อ�?�?าร�?ห�? 0 - 2 //มี�?�?าสู�?สุดที�? HighVolt - LowVolt
-																															//�?ึ�?ต�?อ�?�?ำ 2 //�?�?หารอี�?ทีเ�?ื�?อ�?ห�? 0 //�?�?ถึ�? HighVolt - LowVolt
-																															//�?า�?�?ั�?�?�?�?อย�?ำ LowVolt //�?�?�?ว�?อี�?ทีทำ�?ห�? dataOut //อยู�?�?�?�?�?ว�? LowVolt //ถึ�? HighVolt
+					dataOut = ((HighVolt - LowVolt)*4096.0/66.0)*(sin(2*M_PI*counter/4096.0)+1.0) + (LowVolt*4096.0/33.0);
 				}
 				break;
 				case SQUARE_WAVE:
 				{
-					if(duty*4096.0/100.0 >= counter) 	//�?ำ�?�?า dutyCycle //มาหาร 100 //�?ล�?ว�?ำ�?�?�?ูณ 4096 //�?ะ�?ด�?�?�?าที�?อยู�?ระหว�?า�? 0 - 4096
-														//ถ�?า�?�?าดั�?�?ล�?าวมา�?�?ว�?า counter //dataOut = HighVolt
+					if(duty*4096.0/100.0 >= counter)
 					{
 						dataOut = HighVolt*4096.0/33.0;
 						if(HighVolt == 33)
@@ -219,7 +206,7 @@ int main(void)
 							dataOut = 4095;
 						}
 					}
-					else								//ถ�?า�?�?อย�?ว�?า dataOut = LowVolt
+					else
 					{
 						dataOut = LowVolt*4096.0/33.0;
 					}
@@ -627,33 +614,47 @@ static void MX_TIM3_Init(void)
 }
 
 /**
-  * @brief TIM11 Initialization Function
+  * @brief TIM5 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM11_Init(void)
+static void MX_TIM5_Init(void)
 {
 
-  /* USER CODE BEGIN TIM11_Init 0 */
+  /* USER CODE BEGIN TIM5_Init 0 */
 
-  /* USER CODE END TIM11_Init 0 */
+  /* USER CODE END TIM5_Init 0 */
 
-  /* USER CODE BEGIN TIM11_Init 1 */
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE END TIM11_Init 1 */
-  htim11.Instance = TIM11;
-  htim11.Init.Prescaler = 99;
-  htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim11.Init.Period = 65535;
-  htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
+  /* USER CODE BEGIN TIM5_Init 1 */
+
+  /* USER CODE END TIM5_Init 1 */
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 99;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 4294967295;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM11_Init 2 */
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM5_Init 2 */
 
-  /* USER CODE END TIM11_Init 2 */
+  /* USER CODE END TIM5_Init 2 */
 
 }
 
@@ -780,7 +781,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim == &htim11)
+	if (htim == &htim5)
 	{
 		_micro += 65535;
 	}
@@ -788,7 +789,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 inline uint64_t micros()
 {
-	return htim11.Instance->CNT + _micro;
+	return htim5.Instance->CNT + _micro;
 }
 
 int16_t UARTRecieveIT()
